@@ -7,6 +7,9 @@ require "mail"
 
 Dotenv.load
 
+URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.VA.json?vaccineinfo"
+REFERRER = "https://www.cvs.com/immunizations/covid-19-vaccine"
+
 puts "Starting CVS COVID vaccine checker"
 puts ""
 
@@ -23,9 +26,6 @@ while true do
       enable_ssl: true
     )
   end
-
-  URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.VA.json?vaccineinfo"
-  REFERRER = "https://www.cvs.com/immunizations/covid-19-vaccine"
 
   open(URL, "Referer" => REFERRER) do |f|
     payload = JSON.parse(f.read)
