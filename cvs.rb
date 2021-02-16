@@ -7,7 +7,8 @@ require "mail"
 
 Dotenv.load
 
-URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.VA.json?vaccineinfo"
+STATE = "NJ".freeze
+URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.#{STATE}.json?vaccineinfo"
 REFERRER = "https://www.cvs.com/immunizations/covid-19-vaccine"
 
 puts "Starting CVS COVID vaccine checker"
@@ -29,7 +30,7 @@ while true do
 
   open(URL, "Referer" => REFERRER) do |f|
     payload = JSON.parse(f.read)
-    locations = payload["responsePayloadData"]["data"]["VA"]
+    locations = payload["responsePayloadData"]["data"][STATE]
     puts "Locations reported: #{locations.size}"
 
     available = locations.select { |location| location["status"] !~ /booked/i }
