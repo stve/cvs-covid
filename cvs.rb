@@ -30,6 +30,7 @@ while true do
   open(URL, "Referer" => REFERRER) do |f|
     payload = JSON.parse(f.read)
     locations = payload["responsePayloadData"]["data"]["VA"]
+    puts "Locations reported: #{locations.size}"
 
     available = locations.select { |location| location["status"] !~ /booked/i }
 
@@ -51,5 +52,5 @@ while true do
   end
 
   puts "-----\n"
-  sleep 300
+  sleep 60
 end
