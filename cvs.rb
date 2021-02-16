@@ -1,11 +1,8 @@
 #!/usr/bin/env ruby
 
-require "dotenv"
 require "open-uri"
 require "json"
 require "mail"
-
-Dotenv.load
 
 STATE = "NJ".freeze
 URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.#{STATE}.json?vaccineinfo"
