@@ -8,6 +8,7 @@ STATE = "NJ".freeze
 URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.#{STATE}.json?vaccineinfo"
 REFERRER = "https://www.cvs.com/immunizations/covid-19-vaccine"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+APPOINTMENT_URL = "https://www.cvs.com/vaccine/intake/store/cvd-schedule?icid=coronavirus-lp-vaccine-sd-statetool"
 RECIPIENTS = []
 
 PREFERRED_LOCATIONS = Set.new(["HAZLET", "EAST BRUNSWICK", "FLEMINGTON", "GREEN BROOK", "PRINCETON", "WEST ORANGE"])
@@ -68,7 +69,7 @@ while true do
       body = ""
       body << "Preferred Locations\n#{preferred_cities.join("\n")}\n\n" if preferred_cities.any?
       body << "All Available Locations\n#{cities.join("\n")}\n\n"
-      body << "Book Appointment #{REFERRER}\n"
+      body << "Book Appointment #{APPOINTMENT_URL}\n"
 
       mail = Mail.deliver do
         from ENV.fetch("FROM_EMAIL")
