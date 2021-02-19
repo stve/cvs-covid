@@ -1,18 +1,33 @@
 #!/usr/bin/env ruby
 
-require "open-uri"
 require "json"
 require "mail"
+require "http"
 
 STATE = "NJ".freeze
 URL = "https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.#{STATE}.json?vaccineinfo"
 REFERRER = "https://www.cvs.com/immunizations/covid-19-vaccine"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+RECIPIENTS = []
+
+PREFERRED_LOCATIONS = Set.new(["HAZLET", "EAST BRUNSWICK", "FLEMINGTON", "GREEN BROOK", "PRINCETON", "WEST ORANGE"])
 
 puts "Starting CVS COVID vaccine checker"
 puts ""
 
+def print_and_flush(str)
+  print str
+  $stdout.flush
+end
+
+def format(location)
+  str = "#{location["city"]} (#{location["status"]})"
+  str << ", #{location["totalAvailable"]} Available Appointments - #{location["pctAvailable"]}" if location['totalAvailable'].to_i > 0
+  str
+end
+
 while true do
-  puts "Checking at #{Time.now}"
+  # puts "Checking at #{Time.now}"
 
   Mail.defaults do
     delivery_method(
@@ -25,30 +40,47 @@ while true do
     )
   end
 
-  open(URL, "Referer" => REFERRER) do |f|
-    payload = JSON.parse(f.read)
+  headers = {
+    "User-Agent" => USER_AGENT,
+    "Referer" => REFERRER,
+    :accept => "application/json",
+  }
+
+  response = HTTP.headers(headers).get(URL)
+  if response.status.success?
+    payload = response.parse
     locations = payload["responsePayloadData"]["data"][STATE]
-    puts "Locations reported: #{locations.size}"
+    # puts "Locations reported: #{locations.size}"
 
     available = locations.select { |location| location["status"] !~ /booked/i }
 
-    if available.any?
-      cities = available.map { |location| "#{location["city"]} (#{location["status"]}, #{location["totalAvailable"]} available)" }
+    # available = [{"city" => "PRINCETON", "status" => "Available", "totalAvailable" => 20}]
 
-      puts "Availabilities!"
-      puts cities
+    if available.any?
+      preferred_available = available.select { |location| PREFERRED_LOCATIONS.include?(location["city"]) }
+      preferred_cities = preferred_available.map { |location| format(location) }
+      cities = available.map { |location| format(location) }
+
+      # puts "Availabilities!"
+      print_and_flush "!"
+      # puts cities
+
+      body = ""
+      body << "Preferred Locations\n#{preferred_cities.join("\n")}\n\n" if preferred_cities.any?
+      body << "All Available Locations\n#{cities.join("\n")}\n\n"
+      body << "Book Appointment #{REFERRER}\n"
 
       mail = Mail.deliver do
         from ENV.fetch("FROM_EMAIL")
-        to ENV.fetch("TO_EMAIL")
-        subject "CVS availabilities"
-        body cities.join("\n")
+        to RECIPIENTS
+        subject "CVS Vaccine Availabilities"
+        body body
       end
-    else
-      puts "Nothing found :("
     end
+  else
+    puts "x" # response.body.to_s
   end
 
-  puts "-----\n"
+  print_and_flush "."
   sleep 60
 end
